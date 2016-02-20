@@ -96,7 +96,7 @@ class LeagueBot(object):
         else:
             game_length = (int(curr_game['gameLength']) / 60) + 3
             for participant in curr_game['participants']:
-                if participant['summonerName'].lower() == player:
+                if participant['summonerName'].lower() == player.lower():
                     champion = self.champions[str(participant['championId'])]
                     lolnexus_url = 'http://www.lolnexus.com/EUW/search?name={}&region=EUW'.format(player)
                     self.client.send_message(
