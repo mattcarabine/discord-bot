@@ -1,0 +1,11 @@
+leaguebot:
+  container_name: leaguebot
+  build: .
+  env_file:
+      - .env
+  dockerfile: docker/Dockerfile
+  volumes:
+      - .:/discord-bot
+  ports:
+      - "80:80"
+  restart: always
