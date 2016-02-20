@@ -104,3 +104,4 @@ class LeagueBot(object):
                         '- Playing {}\nLink to game: {}'
                         .format(player, game_length, champion, lolnexus_url))
                     break
+            self.client.send_message(message.channel, 'debug message')
