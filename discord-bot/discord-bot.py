@@ -1,4 +1,5 @@
 import discord
+import logging
 import re
 import os
 
@@ -18,18 +19,19 @@ commands = {r'^leaguebot add (\w|\s){3,16}$': l.add_player,
             r'^leaguebot current-games$': l.get_current_games,
             r'^leaguebot current-game (\w|\s){3,16}$': l.get_current_game}
 
+
 @client.event
 def on_message(message):
     for command, function in commands.iteritems():
         if re.search(command, message.content):
+            l.channel = message.channel
             function(message)
+
 
 @client.event
 def on_ready():
-    print('Logged in as')
-    print(client.user.name)
-    print(client.user.id)
-    print('------')
+    logging.getLogger('discord-bot').info(
+        'Logged in as {}'.format(client.user))
 
 client.run()
 

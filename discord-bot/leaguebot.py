@@ -9,21 +9,35 @@ CHAMP_LIST_LOC = os.path.join(os.environ.get('DATA_PATH'), 'champions.json')
 league_bot_logger = logging.getLogger('leaguebot')
 league_bot_logger.level = logging.INFO
 
+
 class LeagueBot(object):
     def __init__(self, client):
         self.players = self.load_player_list()
         self.champions = self.load_champions()
         self.client = client
-        self.riot = RiotWatcher(os.environ.get('RIOT_API_KEY'), default_region=EUROPE_WEST)
+        self.riot = RiotWatcher(os.environ.get('RIOT_API_KEY'),
+                                default_region=EUROPE_WEST)
+        self.channel = None
 
-    def load_player_list(self):
+    def send_message(self, message):
+        if self.channel:
+            self.client.send_message(self.channel, message)
+            self.channel = None
+        else:
+            league_bot_logger.warning(
+                'Unable to send message `{}`, no channel specified'
+                .format(message))
+
+    @staticmethod
+    def load_player_list():
         if os.path.exists(PLAYER_LIST_LOC):
             with open(PLAYER_LIST_LOC, 'r') as f:
                 return json.loads(f.read())
         else:
             return {}
 
-    def load_champions(self):
+    @staticmethod
+    def load_champions():
         if os.path.exists(CHAMP_LIST_LOC):
             with open(CHAMP_LIST_LOC, 'r') as f:
                 return json.loads(f.read())
@@ -39,13 +53,15 @@ class LeagueBot(object):
             summoner = self.riot.get_summoner(name=player)
         except LoLException as e:
             if e == error_404:
-                self.client.send_message(message.channel, 'Error - Player {} does not exist'.format(player))
+                self.send_message('Error - Player {} does not exist'
+                                  .format(player))
             else:
-                self.client.send_message(message.channel, 'An unknown error occurred, let Matt know!')
+                self.send_message('An unknown error occurred, let Matt know!')
+                league_bot_logger.warning(e)
             return
 
         self.players[summoner['name'].lower()] = summoner['id']
-        self.client.send_message(message.channel, 'Added {} to list of players'.format(player))
+        self.send_message('Added {} to list of players'.format(player))
         self.save_player_list()
 
     def print_players(self, message):
@@ -53,9 +69,9 @@ class LeagueBot(object):
             player_list = '\n'
             for player in self.players:
                 player_list += '{}\n'.format(player)
-            self.client.send_message(message.channel, player_list)
+            self.send_message(player_list)
         else:
-            self.client.send_message(message.channel, 'Player list empty')
+            self.send_message('Player list empty')
 
     def save_player_list(self):
         with open(PLAYER_LIST_LOC, 'w') as f:
@@ -75,9 +91,12 @@ class LeagueBot(object):
                     summoner = self.riot.get_summoner(name=player)
                 except LoLException as e:
                     if e == error_404:
-                        self.client.send_message(message.channel, 'Error - Player {} does not exist'.format(player))
+                        self.send_message(
+                            'Error - Player {} does not exist'.format(player))
                     else:
-                        self.client.send_message(message.channel, 'An unknown error occurred, let Matt know!')
+                        self.send_message(
+                            'An unknown error occurred, let Matt know!')
+                        league_bot_logger.warning(e)
                     return
                 else:
                     player_id = summoner['id']
@@ -90,7 +109,7 @@ class LeagueBot(object):
             curr_game = self.riot.get_current_game(player_id)
         except LoLException as e:
             if e == error_404:
-                self.client.send_message(message.channel, '{} is not in a game'.format(player))
+                self.send_message('{} is not in a game'.format(player))
             else:
                 league_bot_logger.warning(e)
         else:
@@ -98,9 +117,12 @@ class LeagueBot(object):
             for participant in curr_game['participants']:
                 if participant['summonerName'].lower() == player.lower():
                     champion = self.champions[str(participant['championId'])]
-                    lolnexus_url = 'http://www.lolnexus.com/EUW/search?name={}&region=EUW'.format(player)
-                    self.client.send_message(
-                        message.channel, '{} has been in a game for {} minutes'
-                        '- Playing {}\nLink to game: {}'
+                    lolnexus_url = (
+                        'http://www.lolnexus.com/EUW/search?name={}&region=EUW'
+                        .format(player))
+
+                    self.send_message(
+                        '{} has been in a game for {} minutes - Playing {}\n'
+                        'Link to game: {}'
                         .format(player, game_length, champion, lolnexus_url))
                     break
