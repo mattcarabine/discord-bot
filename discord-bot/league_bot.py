@@ -3,6 +3,7 @@ import os
 import logging
 
 from riotwatcher import RiotWatcher, EUROPE_WEST, LoLException, error_404
+from discord_bot import DiscordBot
 
 PLAYER_LIST_LOC = os.path.join(os.environ.get('DATA_PATH'), 'players.json')
 CHAMP_LIST_LOC = os.path.join(os.environ.get('DATA_PATH'), 'champions.json')
@@ -10,23 +11,14 @@ league_bot_logger = logging.getLogger('leaguebot')
 league_bot_logger.level = logging.INFO
 
 
-class LeagueBot(object):
+class LeagueBot(DiscordBot):
+
     def __init__(self, client):
+        super(LeagueBot, self).__init__(client, 'leaguebot')
         self.players = self.load_player_list()
         self.champions = self.load_champions()
-        self.client = client
         self.riot = RiotWatcher(os.environ.get('RIOT_API_KEY'),
                                 default_region=EUROPE_WEST)
-        self.channel = None
-
-    def send_message(self, message):
-        if self.channel:
-            self.client.send_message(self.channel, message)
-            self.channel = None
-        else:
-            league_bot_logger.warning(
-                'Unable to send message `{}`, no channel specified'
-                .format(message))
 
     @staticmethod
     def load_player_list():
@@ -44,11 +36,9 @@ class LeagueBot(object):
         else:
             return {}
 
-    def add_player(self, message, **kwargs):
-        try:
-            player = kwargs['player']
-        except KeyError:
-            player = message.content.split('add', 1)[1].strip()
+    @DiscordBot.add_command('add')
+    def add_player(self, *args):
+        player = ''.join(args)
         try:
             summoner = self.riot.get_summoner(name=player)
         except LoLException as e:
@@ -62,9 +52,10 @@ class LeagueBot(object):
 
         self.players[summoner['name'].lower()] = summoner['id']
         self.send_message('Added {} to list of players'.format(player))
-        self.save_player_list()
+        self._save_player_list()
 
-    def print_players(self, message):
+    @DiscordBot.add_command('list')
+    def print_players(self, *args):
         if self.players:
             player_list = '\n'
             for player in self.players:
@@ -73,35 +64,32 @@ class LeagueBot(object):
         else:
             self.send_message('Player list empty')
 
-    def save_player_list(self):
+    def _save_player_list(self):
         with open(PLAYER_LIST_LOC, 'w') as f:
             f.write(json.dumps(self.players))
 
-    def get_current_games(self, message):
+    @DiscordBot.add_command('current-games')
+    def get_current_games(self, *args):
         for player in self.players:
-            self.get_current_game(message, player=player)
+            self.get_current_game(player)
 
-    def get_current_game(self, message, **kwargs):
-        try:
-            player = kwargs['player']
-        except KeyError:
-            player = message.content.split('current-game', 1)[1].strip().lower()
-            if player not in self.players.keys():
-                try:
-                    summoner = self.riot.get_summoner(name=player)
-                except LoLException as e:
-                    if e == error_404:
-                        self.send_message(
-                            'Error - Player {} does not exist'.format(player))
-                    else:
-                        self.send_message(
-                            'An unknown error occurred, let Matt know!')
-                        league_bot_logger.warning(e)
-                    return
+    @DiscordBot.add_command('current-game')
+    def get_current_game(self, *args):
+        player = ''.join(args)
+        if player not in self.players.keys():
+            try:
+                summoner = self.riot.get_summoner(name=player)
+            except LoLException as e:
+                if e == error_404:
+                    self.send_message(
+                        'Error - Player {} does not exist'.format(player))
                 else:
-                    player_id = summoner['id']
+                    self.send_message(
+                        'An unknown error occurred, let Matt know!')
+                    league_bot_logger.warning(e)
+                return
             else:
-                player_id = self.players[player]
+                player_id = summoner['id']
         else:
             player_id = self.players[player]
 
