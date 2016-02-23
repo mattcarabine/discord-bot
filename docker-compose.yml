@@ -8,4 +8,13 @@ leaguebot:
       - .:/discord-bot
   ports:
       - "80:80"
-  restart: always
+  restart: alwaysbackup:
+  container_name: backup
+  build: .
+  env_file:
+      - .env
+  dockerfile: docker/backup/Dockerfile
+  external_links:
+      - couchbase:db
+  volumes:
+      - /opt/docker/backup:/backup
