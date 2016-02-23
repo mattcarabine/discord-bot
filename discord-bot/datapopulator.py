@@ -59,10 +59,11 @@ class MatchHistoryUpdater():
                     break
                 else:
                     db_matches['games'].insert(0, api_match)
-                    logger_datapop.info('Added game to {}'.format(player_id))
+                    logger_datapop.info('Added game {} to {}'.format(
+                        api_match['gameId'], player_id))
 
             self.storage_manager.set(key, db_matches)
-            logger_datapop.info('Updated {}'.format(key))
+            logger_datapop.debug('Updated {}'.format(key))
 
 if __name__ == '__main__':
     MatchHistoryUpdater()
