@@ -1,0 +1,1 @@
+FROM couchbase/server:enterprise-4.1.0

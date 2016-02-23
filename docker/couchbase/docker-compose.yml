@@ -1,0 +1,8 @@
+couchbase:
+  container_name: couchbase
+  build: ../../
+  dockerfile: docker/couchbase/Dockerfile
+  ports:
+      - "8091:8091"
+  volumes:
+      - /opt/docker/couchbase:/opt/couchbase/var
