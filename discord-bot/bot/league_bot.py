@@ -7,7 +7,7 @@ from discord_bot import DiscordBot
 from manager.manager import CouchbaseManager, FileNotFoundError, FileManager
 from util.import_champs import import_champs
 
-league_bot_logger = logging.getLogger('leaguebot')
+league_bot_logger = logging.getLogger('discordbot.leaguebot')
 league_bot_logger.level = logging.INFO
 
 WANTED_SUB_TYPES = ['NORMAL', 'RANKED_SOLO_5x5', 'RANKED_TEAM_5x5',

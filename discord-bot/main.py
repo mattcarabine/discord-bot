@@ -31,7 +31,7 @@ def main():
 
     @client.event
     def on_ready():
-        logging.getLogger('bot').info(
+        logging.getLogger('discordbot').info(
             'Logged in as {}'.format(client.user))
 
     client.run()
