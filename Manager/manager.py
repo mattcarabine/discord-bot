@@ -1,6 +1,8 @@
 import json
 import os
 
+from util.setup_directory import setup_dir
+
 
 class FileNotFoundError(IOError):
     """
@@ -20,15 +22,22 @@ class Manager(object):
 
 
 class FileManager(Manager):
+
+    def __init__(self):
+        self.data_path = os.environ.get('DATA_PATH')
+        setup_dir(self.data_path)
+
     def set(self, key, value):
         key = '{}.json'.format(key)
-        with open(key, 'w') as f:
+        file_path = os.path.join(self.data_path, key)
+        with open(file_path, 'w') as f:
             f.write(json.dumps(value))
 
     def get(self, key):
         key = '{}.json'.format(key)
+        file_path = os.path.join(self.data_path, key)
         try:
-            with open(key, 'r') as f:
+            with open(file_path, 'r') as f:
                 value = json.loads(f.read())
         except IOError:
             raise FileNotFoundError()
