@@ -1,12 +1,11 @@
-import json
 import os
 import logging
-
 from riotwatcher import RiotWatcher, EUROPE_WEST, LoLException, error_404
-from discord_bot import DiscordBot
 
-PLAYER_LIST_LOC = os.path.join(os.environ.get('DATA_PATH'), 'players.json')
-CHAMP_LIST_LOC = os.path.join(os.environ.get('DATA_PATH'), 'champions.json')
+from discord_bot import DiscordBot
+from manager.manager import CouchbaseManager, FileNotFoundError, FileManager
+from util.import_champs import import_champs
+
 league_bot_logger = logging.getLogger('leaguebot')
 league_bot_logger.level = logging.INFO
 
@@ -15,67 +14,69 @@ class LeagueBot(DiscordBot):
 
     def __init__(self, client):
         super(LeagueBot, self).__init__(client, 'leaguebot')
-        self.players = self.load_player_list()
-        self.champions = self.load_champions()
+        self.storage_manager = CouchbaseManager(
+            os.environ.get('MATCH_HISTORY_BUCKET'))
         self.riot = RiotWatcher(os.environ.get('RIOT_API_KEY'),
                                 default_region=EUROPE_WEST)
+        self.players = self.load_player_list()
+        self.champions = self.load_champions()
 
-    @staticmethod
-    def load_player_list():
-        if os.path.exists(PLAYER_LIST_LOC):
-            with open(PLAYER_LIST_LOC, 'r') as f:
-                return json.loads(f.read())
-        else:
-            return {}
+    def load_player_list(self):
+        try:
+            players = self.storage_manager.get('players')
+        except FileNotFoundError:
+            players = {}
 
-    @staticmethod
-    def load_champions():
-        if os.path.exists(CHAMP_LIST_LOC):
-            with open(CHAMP_LIST_LOC, 'r') as f:
-                return json.loads(f.read())
-        else:
-            return {}
+        return players
+
+    def load_champions(self):
+        try:
+            champs = self.storage_manager.get('champions')
+        except FileNotFoundError:
+            champs = import_champs()
+            self.storage_manager.set('champions', champs)
+
+        return champs
 
     @DiscordBot.add_command('add')
     def add_player(self, *args):
         player = ''.join(args)
-        try:
-            summoner = self.riot.get_summoner(name=player)
-        except LoLException as e:
-            if e == error_404:
-                self.send_message('Error - Player {} does not exist'
-                                  .format(player))
-            else:
-                self.send_message('An unknown error occurred, let Matt know!')
-                league_bot_logger.warning(e)
-            return
-
-        self.players[summoner['name'].lower()] = summoner['id']
-        self.send_message('Added {} to list of players'.format(player))
-        self._save_player_list()
+        if player not in self.players:
+            try:
+                summoner = self.riot.get_summoner(name=player)
+            except LoLException as e:
+                if e == error_404:
+                    self.send_message('Error - Player {} does not exist'
+                                      .format(player))
+                else:
+                    self.send_message('An unknown error occurred, let Matt know!')
+                    league_bot_logger.warning(e)
+                return
+            self.players[summoner['name'].lower()] = summoner['id']
+            self.send_message('Added {} to list of players'.format(player))
+            self.storage_manager.set('players', self.players)
+        else:
+            self.send_message('{} already in the list of players'.format(player))
 
     @DiscordBot.add_command('list')
-    def print_players(self, *args):
+    def print_players(self, *_):
         if self.players:
             player_list = '\n'
-            for player in self.players:
-                player_list += '{}\n'.format(player)
+            for player, player_id in self.players.iteritems():
+                player_list += '{}{}\n'.format(player, len(self.storage_manager.get('matches-{}'.format(player_id))['games']))
+
             self.send_message(player_list)
         else:
             self.send_message('Player list empty')
 
-    def _save_player_list(self):
-        with open(PLAYER_LIST_LOC, 'w') as f:
-            f.write(json.dumps(self.players))
-
     @DiscordBot.add_command('current-games')
-    def get_current_games(self, *args):
+    def get_current_games(self, *_):
         for player in self.players:
             self.get_current_game(player)
 
     @DiscordBot.add_command('current-game')
     def get_current_game(self, *args):
-        player = ''.join(args)
+        player = ''.join(args).lower()
         if player not in self.players.keys():
             try:
                 summoner = self.riot.get_summoner(name=player)
