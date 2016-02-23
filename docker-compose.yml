@@ -3,12 +3,30 @@ leaguebot:
   build: .
   env_file:
       - .env
-  dockerfile: docker/Dockerfile
+  dockerfile: docker/bot/Dockerfile
+  external_links:
+      - couchbase:db
   volumes:
       - .:/discord-bot
   ports:
-      - "80:80"
-  restart: alwaysbackup:
+      - "18334:80"
+  restart: always
+
+datapopulator:
+  container_name: datapopulator
+  build: .
+  env_file:
+      - .env
+  dockerfile: docker/match-history/Dockerfile
+  external_links:
+    - couchbase:db
+  volumes:
+      - .:/discord-bot
+  ports:
+      - "18335:80"
+  restart: always
+
+backup:
   container_name: backup
   build: .
   env_file:

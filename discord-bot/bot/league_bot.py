@@ -44,7 +44,7 @@ class LeagueBot(DiscordBot):
     @DiscordBot.add_command('add')
     def add_player(self, *args):
         player = ''.join(args)
-        if player not in self.players:
+        if player.lower() not in self.players:
             try:
                 summoner = self.riot.get_summoner(name=player)
             except LoLException as e:
@@ -66,7 +66,14 @@ class LeagueBot(DiscordBot):
         if self.players:
             player_list = '\n'
             for player, player_id in self.players.iteritems():
-                player_list += '{}{}\n'.format(player, len(self.storage_manager.get('matches-{}'.format(player_id))['games']))
+                try:
+                    number_of_games = len(self.storage_manager.get('matches-{}'
+                                          .format(player_id))['games'])
+                except FileNotFoundError:
+                    number_of_games = 0
+
+                player_list += '{} - {} games\n'.format(player,
+                                                        number_of_games)
 
             self.send_message(player_list)
         else:

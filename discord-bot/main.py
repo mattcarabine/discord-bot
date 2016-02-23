@@ -2,7 +2,7 @@ import discord
 import logging
 import os
 
-from league_bot import LeagueBot
+from bot.league_bot import LeagueBot
 
 stream_handler = logging.StreamHandler()
 log_format = logging.Formatter(
@@ -31,7 +31,7 @@ def main():
 
     @client.event
     def on_ready():
-        logging.getLogger('discord-bot').info(
+        logging.getLogger('bot').info(
             'Logged in as {}'.format(client.user))
 
     client.run()

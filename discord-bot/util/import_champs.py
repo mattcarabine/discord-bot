@@ -1,7 +1,6 @@
 from riotwatcher import RiotWatcher
 import os
 
-
 def import_champs():
     w = RiotWatcher(os.environ.get('RIOT_API_KEY'))
     champs = w.static_get_champion_list()
