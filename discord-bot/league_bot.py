@@ -1,3 +1,4 @@
+from collections import defaultdict, OrderedDict
 import os
 import logging
 from riotwatcher import RiotWatcher, EUROPE_WEST, LoLException, error_404
@@ -115,3 +116,26 @@ class LeagueBot(DiscordBot):
                         'Link to game: {}'
                         .format(player, game_length, champion, lolnexus_url))
                     break
+
+    @DiscordBot.add_command('stats')
+    def summarise_stats(self, *args):
+        player = ''.join(args).lower()
+        matches = self.storage_manager.get('matches-{}'.format(self.players[player]))
+        stat_averages = defaultdict(list)
+        for match in matches['games']:
+            for stat, value in match['stats'].iteritems():
+                stat_averages[stat].append(value)
+
+        output = ''
+        for stat, value in OrderedDict(sorted(stat_averages.items())).iteritems():
+            try:
+                output += '{} - {:.3f}\n'.format(stat, float(sum(value)) / len(matches['games']))
+            except TypeError:
+                pass
+        output += 'Games - {}'.format(len(matches['games']))
+        self.send_message(output)
+
+    @DiscordBot.add_command('is')
+    def dank_meme(self, *args):
+        print 'got here'
+        self.send_message("It's not boosting, it's just elo rushing, he is entitled to be there")
