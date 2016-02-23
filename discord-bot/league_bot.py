@@ -10,6 +10,8 @@ from util.import_champs import import_champs
 league_bot_logger = logging.getLogger('leaguebot')
 league_bot_logger.level = logging.INFO
 
+WANTED_SUB_TYPES = ['NORMAL', 'RANKED_SOLO_5x5', 'RANKED_TEAM_5x5',
+                    'CAP_5x5']
 
 class LeagueBot(DiscordBot):
 
@@ -120,19 +122,24 @@ class LeagueBot(DiscordBot):
     @DiscordBot.add_command('stats')
     def summarise_stats(self, *args):
         player = ''.join(args).lower()
+        if player not in self.players:
+            self.send_message('{} not in list of players, no stats found'.format(player))
         matches = self.storage_manager.get('matches-{}'.format(self.players[player]))
         stat_averages = defaultdict(list)
+        match_counter = 0
         for match in matches['games']:
-            for stat, value in match['stats'].iteritems():
-                stat_averages[stat].append(value)
+            if match['subType'] in WANTED_SUB_TYPES:
+                match_counter += 1
+                for stat, value in match['stats'].iteritems():
+                    stat_averages[stat].append(value)
 
         output = ''
         for stat, value in OrderedDict(sorted(stat_averages.items())).iteritems():
             try:
-                output += '{} - {:.3f}\n'.format(stat, float(sum(value)) / len(matches['games']))
+                output += '{} - {:.3f}\n'.format(stat, float(sum(value)) / match_counter)
             except TypeError:
                 pass
-        output += 'Games - {}'.format(len(matches['games']))
+        output += 'Games - {}'.format(match_counter)
         self.send_message(output)
 
     @DiscordBot.add_command('is')
