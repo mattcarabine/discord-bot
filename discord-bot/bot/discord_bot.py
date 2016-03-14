@@ -26,7 +26,7 @@ class DiscordBot(object):
                 func(self, *args)
                 break
         else:
-            self.send_message('Error, command not found')
+            self.send_message("Command '{}' not recognised".format(message))
 
     @classmethod
     def add_command(cls, command):

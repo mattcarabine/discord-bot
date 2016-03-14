@@ -149,7 +149,13 @@ class LeagueBot(DiscordBot):
         output += 'Games - {}'.format(match_counter)
         self.send_message(output)
 
-    @DiscordBot.add_command('is')
+    @DiscordBot.add_command('is Neku eloboosted?')
     def dank_meme(self, *args):
         print 'got here'
         self.send_message("It's not boosting, it's just elo rushing, he is entitled to be there")
+
+    @DiscordBot.add_command('help')
+    def list_commands(self):
+        command_str = 'List of commands:\n'
+        command_str += '\n'.join(sorted(self.__class__.commands))
+        self.send_message(command_str)
