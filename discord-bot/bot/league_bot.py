@@ -180,9 +180,12 @@ class LeagueBot(DiscordBot):
     def add_meme(self, *args):
         """Adds a new meme"""
         meme = ' '.join(args)
-        self.memes.append(meme)
-        self.storage_manager.set('memes', self.memes)
-        self.send_message("Added '{}' to list of memes".format(meme))
+        if meme not in self.memes:
+            self.memes.append(meme)
+            self.storage_manager.set('memes', self.memes)
+            self.send_message("Added '{}' to list of memes".format(meme))
+        else:
+            self.send_message('Fuck that repost')
 
     @DiscordBot.add_command('meme me')
     def random_meme(self, *args):
