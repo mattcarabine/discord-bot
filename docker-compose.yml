@@ -36,3 +36,14 @@ backup:
       - couchbase:db
   volumes:
       - /opt/docker/backup:/backup
+
+restore:
+  container_name: restore
+  build: .
+  env_file:
+      - .env
+  dockerfile: docker/restore/Dockerfile
+  external_links:
+      - couchbase:db
+  volumes:
+      - /opt/docker/restore:/backup
