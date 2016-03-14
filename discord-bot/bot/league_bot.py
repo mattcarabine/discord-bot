@@ -1,6 +1,7 @@
 from collections import defaultdict, OrderedDict
 import os
 import logging
+import random
 from riotwatcher import RiotWatcher, EUROPE_WEST, LoLException, error_404
 
 from discord_bot import DiscordBot
@@ -23,6 +24,7 @@ class LeagueBot(DiscordBot):
                                 default_region=EUROPE_WEST)
         self.players = self.load_player_list()
         self.champions = self.load_champions()
+        self.memes = self.load_memes()
 
     def load_player_list(self):
         try:
@@ -40,6 +42,13 @@ class LeagueBot(DiscordBot):
             self.storage_manager.set('champions', champs)
 
         return champs
+
+    def load_memes(self):
+        try:
+            memes = self.storage_manager.get('memes')
+        except FileNotFoundError:
+            memes = []
+        return memes
 
     @DiscordBot.add_command('add')
     def add_player(self, *args):
@@ -155,7 +164,18 @@ class LeagueBot(DiscordBot):
         self.send_message("It's not boosting, it's just elo rushing, he is entitled to be there")
 
     @DiscordBot.add_command('help')
-    def list_commands(self):
+    def list_commands(self, *args):
         command_str = 'List of commands:\n'
         command_str += '\n'.join(sorted(self.__class__.commands))
         self.send_message(command_str)
+
+    @DiscordBot.add_command('meme add')
+    def add_meme(self, *args):
+        meme = ' '.join(args)
+        self.memes.append(meme)
+        self.storage_manager.set('memes', self.memes)
+        self.send_message("Added '{}' to list of memes".format(meme))
+
+    @DiscordBot.add_command('meme me')
+    def random_meme(self, *args):
+        self.send_message(random.choice(self.memes))
