@@ -52,6 +52,7 @@ class LeagueBot(DiscordBot):
 
     @DiscordBot.add_command('add')
     def add_player(self, *args):
+        """Adds a player to be tracked"""
         player = ''.join(args)
         if player.lower() not in self.players:
             try:
@@ -72,6 +73,7 @@ class LeagueBot(DiscordBot):
 
     @DiscordBot.add_command('list')
     def print_players(self, *_):
+        """Prints out the list of players"""
         if self.players:
             player_list = '\n'
             for player, player_id in self.players.iteritems():
@@ -95,6 +97,7 @@ class LeagueBot(DiscordBot):
 
     @DiscordBot.add_command('current-game')
     def get_current_game(self, *args):
+        """Gets current-game information for the provided player"""
         player = ''.join(args).lower()
         if player not in self.players.keys():
             try:
@@ -137,6 +140,7 @@ class LeagueBot(DiscordBot):
 
     @DiscordBot.add_command('stats')
     def summarise_stats(self, *args):
+        """Prints out average stats for the given player"""
         player = ''.join(args).lower()
         if player not in self.players:
             self.send_message('{} not in list of players, no stats found'.format(player))
@@ -160,17 +164,21 @@ class LeagueBot(DiscordBot):
 
     @DiscordBot.add_command('is Neku eloboosted?')
     def dank_meme(self, *args):
-        print 'got here'
+        """'Nuff said"""
         self.send_message("It's not boosting, it's just elo rushing, he is entitled to be there")
 
     @DiscordBot.add_command('help')
     def list_commands(self, *args):
-        command_str = 'List of commands:\n'
-        command_str += '\n'.join(sorted(self.__class__.commands))
+        """Lists all commands and their purpose"""
+        command_str = 'List of commands:'
+        for command in sorted(self.__class__.commands):
+            command_str += '\n{} - {}'.format(command,
+                                              self.commands[command].__doc__)
         self.send_message(command_str)
 
     @DiscordBot.add_command('meme add')
     def add_meme(self, *args):
+        """Adds a new meme"""
         meme = ' '.join(args)
         self.memes.append(meme)
         self.storage_manager.set('memes', self.memes)
@@ -178,4 +186,5 @@ class LeagueBot(DiscordBot):
 
     @DiscordBot.add_command('meme me')
     def random_meme(self, *args):
+        """Prints a random meme"""
         self.send_message(random.choice(self.memes))
