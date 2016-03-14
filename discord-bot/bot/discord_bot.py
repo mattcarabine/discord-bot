@@ -18,10 +18,15 @@ class DiscordBot(object):
                 .format(message))
 
     def on_message(self, message):
-        message = message.split(' ')
         for command, func in self.__class__.commands.iteritems():
-            if message[0] == command:
-                func(self, *message[1:])
+            if message.startswith(command):
+                message_list = message.split()
+                command_list = command.split()
+                args = [arg for arg in message_list if arg not in command_list]
+                func(self, *args)
+                break
+        else:
+            self.send_message('Error, command not found')
 
     @classmethod
     def add_command(cls, command):
