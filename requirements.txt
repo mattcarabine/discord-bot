@@ -1,3 +1,4 @@
 riotwatcher
 discord.py
 couchbase
+cleverbot

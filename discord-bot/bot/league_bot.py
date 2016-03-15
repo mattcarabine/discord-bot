@@ -2,6 +2,7 @@ from collections import defaultdict, OrderedDict
 import os
 import logging
 import random
+import cleverbot
 from riotwatcher import RiotWatcher, EUROPE_WEST, LoLException, error_404
 
 from discord_bot import DiscordBot
@@ -25,6 +26,7 @@ class LeagueBot(DiscordBot):
         self.players = self.load_player_list()
         self.champions = self.load_champions()
         self.memes = self.load_memes()
+        self.cleverbot = cleverbot.Cleverbot()
 
     def load_player_list(self):
         try:
@@ -191,3 +193,9 @@ class LeagueBot(DiscordBot):
     def random_meme(self, *args):
         """Prints a random meme"""
         self.send_message(random.choice(self.memes))
+
+    @DiscordBot.add_command('chat')
+    def ask_cleverbot(self, *args):
+        """Have a conversation with leaguebot"""
+        response = self.cleverbot.ask(' '.join(args))
+        self.send_message(response)
