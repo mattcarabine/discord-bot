@@ -143,7 +143,7 @@ class LeagueBot(DiscordBot):
     @DiscordBot.add_command('stats')
     def summarise_stats(self, *args):
         """Prints out average stats for the given player"""
-        player = ''.join(args).lower()
+        player = ' '.join(args).lower()
         if player not in self.players:
             self.send_message('{} not in list of players, no stats found'.format(player))
         matches = self.storage_manager.get('matches-{}'.format(self.players[player]))
