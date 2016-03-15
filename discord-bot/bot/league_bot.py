@@ -187,7 +187,7 @@ class LeagueBot(DiscordBot):
             self.storage_manager.set('memes', self.memes)
             self.send_message("Added '{}' to list of memes".format(meme))
         else:
-            self.send_message('Fuck that repost')
+            self.send_message('No reposts pls')
 
     @DiscordBot.add_command('meme me')
     def random_meme(self, *args):
